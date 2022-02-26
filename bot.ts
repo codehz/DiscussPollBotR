@@ -5,12 +5,12 @@ import {
 } from "https://deno.land/x/grammy@v1.7.0/mod.ts";
 import type {
   Message,
-  User,
 } from "https://deno.land/x/grammy@v1.7.0/platform.deno.ts";
 
 import { config, secret } from "./config.ts";
 import { sign, verify } from "./crypto.ts";
 import { getAdminList, getLinkedChannel } from "./caches.ts";
+import { parsePoll } from "./parse.ts"
 
 const bot = new Bot(secret.token, {
   client: {
@@ -31,28 +31,6 @@ function createTitle(
     if (msg.from.username) author += `(@${msg.from.username})`;
   }
   return `${title}\n投稿自 ${author}`;
-}
-
-function parsePoll(text: string) {
-  const [command, content] = text.split(" ", 2);
-  const is_multi = command.startsWith("/m");
-  if (content == null) throw new Error("空的消息");
-  let sp1 = content.split("\n\n");
-  let title: string, options: string[];
-  switch (sp1.length) {
-    case 1:
-      [title, ...options] = content.split("\n");
-      break;
-    case 2:
-      title = sp1[0];
-      options = sp1[1].split("\n");
-      break;
-    default:
-      throw new Error("格式错误");
-  }
-  if (options.length < 2) throw new Error("至少提供2个选项");
-  if (options.length > 10) throw new Error("至多提供10个选项");
-  return { is_multi, title, options } as const;
 }
 
 const buildPostButtons = (hash: string) =>
