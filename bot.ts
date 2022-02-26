@@ -10,7 +10,11 @@ import type {
 import { config, secret } from "./config.ts";
 import { sign, verify } from "./crypto.ts";
 import { getAdminList, getLinkedChannel } from "./caches.ts";
-import { parsePoll } from "./parse.ts"
+import { parsePoll } from "./parse.ts";
+import getLogger from "./log.ts";
+
+const log = getLogger("bot");
+const poll_log = getLogger("poll");
 
 const bot = new Bot(secret.token, {
   client: {
@@ -94,6 +98,7 @@ bot.command(["poll", "mpoll"], async (ctx: Context) => {
   }
   const text = ctx.msg!.text!;
   const hash = await sign(text);
+  poll_log.debug(text);
   try {
     await createPoll(
       ctx.chat!.id,
@@ -103,6 +108,7 @@ bot.command(["poll", "mpoll"], async (ctx: Context) => {
       ctx.msg?.message_id,
     );
   } catch (e) {
+    log.error(e);
     await reportPollError(ctx, e, hash);
   }
 });
@@ -154,7 +160,7 @@ bot.callbackQuery(
     try {
       if (!await verify(reply.text, hash)) return next();
     } catch (e) {
-      console.error(e);
+      log.error(e);
       return next();
     }
     await ctx.answerCallbackQuery("未更改原始消息");
@@ -180,7 +186,7 @@ bot.callbackQuery(
     try {
       if (!await verify(reply.text, hash)) return next();
     } catch (e) {
-      console.error(e);
+      log.error(e);
       return next();
     }
     if ((await getAdminList(ctx)).includes(ctx.from.id)) {
@@ -231,7 +237,7 @@ bot.callbackQuery("reject", async (ctx) => {
     await ctx.answerCallbackQuery("已经退稿");
   } catch (e) {
     await ctx.answerCallbackQuery("退稿并尝试删除，但是删除失败");
-    console.error(e);
+    log.error(e);
   }
 });
 
