@@ -15,7 +15,6 @@ export function parsePoll(text: string) {
     default:
       throw new Error("格式错误");
   }
-  console.log(title, options);
   if (options.length < 2) throw new Error("至少提供2个选项");
   if (options.length > 10) throw new Error("至多提供10个选项");
   return { is_multi, title, options } as const;
